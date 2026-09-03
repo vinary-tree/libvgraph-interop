@@ -12,6 +12,7 @@ run_gate() {
   shift
   printf '==> %s\n' "$name"
   "$@" >"$evidence_directory/$name.log" 2>&1
+  verify_clean_source >>"$evidence_directory/$name.log" 2>&1
 }
 
 verify_clean_source() {
@@ -20,6 +21,8 @@ verify_clean_source() {
   if [[ -n "$dirty_state" ]]; then
     printf '%s\n' 'portable release evidence requires a clean source commit' >&2
     printf '%s\n' "$dirty_state" >&2
+    git --no-pager diff --no-ext-diff -- >&2
+    git --no-pager diff --cached --no-ext-diff -- >&2
     return 1
   fi
 }

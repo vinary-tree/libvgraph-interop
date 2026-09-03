@@ -31,6 +31,13 @@ diagram_font_is_explicit() {
       "$source" || true)" -eq 1 ]]
 }
 
+portable_gates_check_clean_source() {
+  local verifier="$1"
+  local expected="  verify_clean_source >>\"\$evidence_directory/\$name.log\" 2>&1"
+  [[ -f "$verifier" && ! -L "$verifier" ]] \
+    && [[ "$(grep -F -x -c -- "$expected" "$verifier" || true)" -eq 1 ]]
+}
+
 portable_tool_closure_is_explicit bash grep
 if portable_tool_closure_is_explicit __libvgraph_missing_command__ \
     > "$run_directory/missing.log" 2>&1; then
@@ -91,6 +98,18 @@ if portable_tool_is_declared dot "${complete_tools[@]}"; then
 fi
 
 portable_verifier_mutant="$run_directory/verify-portable.sh"
+cp "$repository_root/scripts/verify-portable.sh" "$portable_verifier_mutant"
+if ! portable_gates_check_clean_source "$repository_root/scripts/verify-portable.sh"; then
+  printf '%s\n' 'portable verifier does not check source cleanliness after every gate' >&2
+  exit 1
+fi
+SEARCH="  verify_clean_source >>\"\$evidence_directory/\$name.log\" 2>&1" \
+REPLACEMENT='' perl -0pi -e \
+  's/\Q$ENV{SEARCH}\E/$ENV{REPLACEMENT}/' "$portable_verifier_mutant"
+if portable_gates_check_clean_source "$portable_verifier_mutant"; then
+  printf '%s\n' 'missing per-gate source-cleanliness mutant unexpectedly passed' >&2
+  exit 1
+fi
 cp "$repository_root/scripts/verify-portable.sh" "$portable_verifier_mutant"
 SEARCH=' -shellcheck=' REPLACEMENT='' perl -0pi -e \
   's/\Q$ENV{SEARCH}\E/$ENV{REPLACEMENT}/' "$portable_verifier_mutant"
