@@ -24,6 +24,7 @@ complete_tools=(
   basename
   bash
   cargo
+  cat
   chmod
   cmp
   comm
@@ -104,6 +105,17 @@ actionlint_is_isolated_from_system_shellcheck() {
   fi
 }
 
+plantuml_layout_is_internal() {
+  local wrapper="${1:-$repository_root/scripts/plantuml}"
+  local expected='net.sourceforge.plantuml.Run -Playout=smetana "$@"'
+  if [[ ! -f "$wrapper" || -L "$wrapper" ]] \
+      || [[ "$(grep -F -c -- "$expected" "$wrapper" || true)" -ne 1 ]]; then
+    printf 'portable verifier must select PlantUML internal Smetana layout: %s\n' \
+      "$wrapper" >&2
+    return 1
+  fi
+}
+
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [[ "$#" -ne 1 ]]; then
     printf 'usage: %s bootstrap|complete\n' "$0" >&2
@@ -117,6 +129,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
       portable_tool_closure_is_explicit "${complete_tools[@]}"
       verify_complete_plugins
       actionlint_is_isolated_from_system_shellcheck
+      plantuml_layout_is_internal
       ;;
     *)
       printf 'unknown portable tool-closure phase: %s\n' "$1" >&2

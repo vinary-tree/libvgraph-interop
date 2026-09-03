@@ -11,6 +11,19 @@ trap 'rm -rf -- "$run_directory"' EXIT
 # shellcheck source=scripts/check-portable-tools.sh
 source "$checker"
 
+portable_tool_is_declared() {
+  local expected="$1"
+  shift
+  local candidate
+  local matches=0
+  for candidate in "$@"; do
+    if [[ "$candidate" == "$expected" ]]; then
+      matches="$((matches + 1))"
+    fi
+  done
+  [[ "$matches" -eq 1 ]]
+}
+
 portable_tool_closure_is_explicit bash grep
 if portable_tool_closure_is_explicit __libvgraph_missing_command__ \
     > "$run_directory/missing.log" 2>&1; then
@@ -20,6 +33,40 @@ fi
 
 "$checker" bootstrap > "$run_directory/bootstrap.log"
 "$checker" complete > "$run_directory/complete.log"
+if ! plantuml_layout_is_internal "$repository_root/scripts/plantuml"; then
+  printf '%s\n' 'PlantUML wrapper does not select the pinned internal Smetana layout' >&2
+  exit 1
+fi
+diagram_source="$run_directory/ambient-graphviz.puml"
+cp "$repository_root/docs/diagrams/release-machine.puml" "$diagram_source"
+if ! GRAPHVIZ_DOT=/opt/local/bin/dot \
+    "$repository_root/scripts/plantuml" -tsvg "$diagram_source" \
+    > "$run_directory/ambient-graphviz.log" 2>&1; then
+  printf '%s\n' 'PlantUML wrapper trusted a poisoned ambient Graphviz path' >&2
+  exit 1
+fi
+
+plantuml_mutant_root="$run_directory/plantuml-mutant-root"
+mkdir -p "$plantuml_mutant_root/scripts"
+cp "$repository_root/scripts/plantuml" "$plantuml_mutant_root/scripts/plantuml"
+ln -s "$repository_root/target" "$plantuml_mutant_root/target"
+SEARCH=' -Playout=smetana' REPLACEMENT='' perl -0pi -e \
+  's/\Q$ENV{SEARCH}\E/$ENV{REPLACEMENT}/' \
+  "$plantuml_mutant_root/scripts/plantuml"
+if plantuml_layout_is_internal "$plantuml_mutant_root/scripts/plantuml" \
+    > "$run_directory/external-graphviz-mutant.log" 2>&1; then
+  printf '%s\n' 'external-Graphviz PlantUML mutant unexpectedly passed' >&2
+  exit 1
+fi
+if ! portable_tool_is_declared cat "${complete_tools[@]}"; then
+  printf '%s\n' 'PlantUML renderer dependency is not declared exactly once: cat' >&2
+  exit 1
+fi
+if portable_tool_is_declared dot "${complete_tools[@]}"; then
+  printf '%s\n' 'portable PlantUML unexpectedly declares external Graphviz' >&2
+  exit 1
+fi
+
 portable_verifier_mutant="$run_directory/verify-portable.sh"
 cp "$repository_root/scripts/verify-portable.sh" "$portable_verifier_mutant"
 SEARCH=' -shellcheck=' REPLACEMENT='' perl -0pi -e \
@@ -45,4 +92,4 @@ if grep -R -E -n \
 fi
 
 printf '%s\n' \
-  'verified declared command closure, isolated actionlint, missing-command rejection, and no ripgrep dependency'
+  'verified declared command closure, isolated renderer paths, isolated actionlint, missing-command rejection, and no ripgrep dependency'

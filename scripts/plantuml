@@ -30,7 +30,7 @@ trap cleanup EXIT
 
 set +e
 java -Djava.awt.headless=true -Djava.io.tmpdir="$repository_tmp" \
-  -cp "$joined_classpath" net.sourceforge.plantuml.Run "$@" \
+  -cp "$joined_classpath" net.sourceforge.plantuml.Run -Playout=smetana "$@" \
   > "$renderer_log" 2>&1
 renderer_status="$?"
 set -e
