@@ -78,11 +78,14 @@ must produce the same canonical edges without shared mutable codec state.
 ## Acceptance order
 
 The portable gate first requires a clean source commit, then executes formal provenance,
-refinement, tool provisioning, ShellCheck, strict YAML lint, root and fuzz formatting, Cargo check,
-strict Clippy, tests, doctests, rustdoc, dependency policy, release-workflow policy and causal
-mutants, workflow lint with external ShellCheck discovery disabled, documentation rendering and
-lint, package inventory, package construction,
-and a final clean-source check—in that order.
+refinement, tool provisioning, portable-tool properties, ShellCheck, strict YAML lint, root and
+fuzz formatting, Cargo check, strict Clippy, tests, doctests, rustdoc, dependency policy,
+release-workflow policy and causal mutants, workflow lint with external ShellCheck discovery
+disabled, documentation rendering and lint, package inventory, package construction, and a final
+clean-source check—in that order. Before the first resolver-affecting Cargo command, the
+portability properties enumerate every tracked `Cargo.lock` file and reject any
+`[[patch.unused]]` table. Such a table records a dependency patch that no manifest consumed and
+can therefore encode ambient developer configuration rather than repository-owned resolution.
 The complete local gate then runs commit-bound fuzzing, mutation testing, benchmarking, and pgmcp's
 bug gate. Every validation command writes complete output below repository-backed
 `target/verification`; no verifier uses memory-backed `/tmp` storage.

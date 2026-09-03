@@ -38,6 +38,12 @@ portable_gates_check_clean_source() {
     && [[ "$(grep -F -x -c -- "$expected" "$verifier" || true)" -eq 1 ]]
 }
 
+lockfile_has_repository_only_resolution() {
+  local lockfile="$1"
+  [[ -f "$lockfile" && ! -L "$lockfile" ]] \
+    && ! grep -F -x -q -- '[[patch.unused]]' "$lockfile"
+}
+
 portable_tool_closure_is_explicit bash grep
 if portable_tool_closure_is_explicit __libvgraph_missing_command__ \
     > "$run_directory/missing.log" 2>&1; then
@@ -47,6 +53,30 @@ fi
 
 "$checker" bootstrap > "$run_directory/bootstrap.log"
 "$checker" complete > "$run_directory/complete.log"
+mapfile -t tracked_lockfiles < <(
+  git -C "$repository_root" ls-files -- '*Cargo.lock'
+)
+if [[ "${#tracked_lockfiles[@]}" -eq 0 ]]; then
+  printf '%s\n' 'portable verification found no tracked Cargo lockfiles' >&2
+  exit 1
+fi
+for tracked_lockfile in "${tracked_lockfiles[@]}"; do
+  lockfile="$repository_root/$tracked_lockfile"
+  if ! lockfile_has_repository_only_resolution "$lockfile"; then
+    printf 'tracked lockfile contains ambient unused-patch state: %s\n' \
+      "$tracked_lockfile" >&2
+    exit 1
+  fi
+  lockfile_mutant="$run_directory/${tracked_lockfile//\//-}.unused-patch"
+  cp "$lockfile" "$lockfile_mutant"
+  printf '\n[[patch.unused]]\nname = "ambient-patch-mutant"\nversion = "0.0.0"\n' \
+    >> "$lockfile_mutant"
+  if lockfile_has_repository_only_resolution "$lockfile_mutant"; then
+    printf 'ambient unused-patch mutant unexpectedly passed: %s\n' \
+      "$tracked_lockfile" >&2
+    exit 1
+  fi
+done
 for diagram_source in "$repository_root"/docs/diagrams/*.puml; do
   if ! diagram_font_is_explicit "$diagram_source"; then
     printf 'PlantUML source does not select the deterministic font exactly once: %s\n' \
@@ -134,4 +164,4 @@ if grep -R -E -n \
 fi
 
 printf '%s\n' \
-  'verified declared command closure, isolated renderer paths, isolated actionlint, missing-command rejection, and no ripgrep dependency'
+  'verified lockfile portability, declared command closure, isolated renderer paths, isolated actionlint, missing-command rejection, and no ripgrep dependency'

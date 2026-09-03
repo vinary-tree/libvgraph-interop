@@ -35,6 +35,7 @@ run_gate formal-provenance "$repository_root/scripts/verify-formal-provenance.sh
 run_gate refinement "$repository_root/scripts/check-refinement.sh"
 run_gate provision-tools "$repository_root/scripts/provision-verification-tools.sh"
 run_gate portable-tool-closure "$repository_root/scripts/check-portable-tools.sh" complete
+run_gate portable-tool-properties "$repository_root/scripts/test-portable-tools.sh"
 shell_sources=(
   "$repository_root/scripts/plantuml"
   "$repository_root"/scripts/*.sh
@@ -59,7 +60,6 @@ run_gate release-assets-properties "$repository_root/scripts/test-reconcile-rele
 run_gate registry-release-properties "$repository_root/scripts/test-registry-release-status.sh"
 run_gate release-sbom-properties "$repository_root/scripts/test-release-sbom.sh"
 run_gate release-version-properties "$repository_root/scripts/test-release-version.sh"
-run_gate portable-tool-properties "$repository_root/scripts/test-portable-tools.sh"
 run_gate formal-source-binding-properties \
   "$repository_root/scripts/test-formal-source-binding.sh"
 run_gate actionlint "$repository_root/target/verification-tools/actionlint" -shellcheck=
