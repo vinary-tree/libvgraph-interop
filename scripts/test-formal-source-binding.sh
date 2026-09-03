@@ -97,5 +97,27 @@ if LIBVGRAPH_CI_WORKFLOW="$ci_mutant" \
   exit 1
 fi
 
+supported_checkout=3d3c42e5aac5ba805825da76410c181273ba90b1
+deprecated_checkout=11d5960a326750d5838078e36cf38b85af677262
+for workflow_label in ci release; do
+  cp "$repository_root/.github/workflows/ci.yml" "$ci_mutant"
+  cp "$repository_root/.github/workflows/release.yml" "$release_mutant"
+  if [[ "$workflow_label" == ci ]]; then
+    checkout_mutant="$ci_mutant"
+  else
+    checkout_mutant="$release_mutant"
+  fi
+  SEARCH="$supported_checkout" REPLACEMENT="$deprecated_checkout" perl -0pi -e \
+    's/\Q$ENV{SEARCH}\E/$ENV{REPLACEMENT}/' "$checkout_mutant"
+  if LIBVGRAPH_CI_WORKFLOW="$ci_mutant" \
+      LIBVGRAPH_RELEASE_WORKFLOW="$release_mutant" \
+      "$workflow_checker" \
+      > "$run_directory/deprecated-checkout-$workflow_label.log" 2>&1; then
+    printf 'deprecated checkout action mutant unexpectedly passed: %s\n' \
+      "$workflow_label" >&2
+    exit 1
+  fi
+done
+
 printf '%s\n' \
-  'verified canonical formal binding, checkout identity, and workflow consumption properties'
+  'verified canonical formal binding, checkout identity, supported action runtime, and workflow consumption properties'

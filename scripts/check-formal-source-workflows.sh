@@ -4,6 +4,7 @@ set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ci_workflow="${LIBVGRAPH_CI_WORKFLOW:-$repository_root/.github/workflows/ci.yml}"
 release_workflow="${LIBVGRAPH_RELEASE_WORKFLOW:-$repository_root/.github/workflows/release.yml}"
+checkout_action_sha=3d3c42e5aac5ba805825da76410c181273ba90b1
 
 workflow_uses_canonical_formal_binding() {
   local workflow="$1"
@@ -28,6 +29,31 @@ workflow_uses_canonical_formal_binding() {
   fi
 }
 
+workflow_uses_supported_checkout() {
+  local workflow="$1"
+  local checkout_ref
+  local checkout_count=0
+  while IFS= read -r checkout_ref; do
+    checkout_count="$((checkout_count + 1))"
+    if [[ "$checkout_ref" != "$checkout_action_sha" ]]; then
+      printf 'workflow uses unsupported actions/checkout commit %s: %s\n' \
+        "$checkout_ref" "$workflow" >&2
+      return 1
+    fi
+  done < <(
+    awk '/^[[:space:]]+uses: actions\/checkout@/ {
+      split($2, parts, "@"); print parts[2]
+    }' "$workflow"
+  )
+  if [[ "$checkout_count" -eq 0 ]]; then
+    printf 'workflow has no immutable actions/checkout step: %s\n' "$workflow" >&2
+    return 1
+  fi
+}
+
 workflow_uses_canonical_formal_binding "$ci_workflow"
 workflow_uses_canonical_formal_binding "$release_workflow"
-printf '%s\n' 'verified CI and release workflows consume one canonical formal-source binding'
+workflow_uses_supported_checkout "$ci_workflow"
+workflow_uses_supported_checkout "$release_workflow"
+printf '%s\n' \
+  'verified CI and release workflows consume one canonical formal-source binding and supported checkout action'

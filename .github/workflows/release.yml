@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Check out protected release policy
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: target/trusted-policy
           fetch-depth: 0
@@ -84,7 +84,7 @@ jobs:
           printf 'tag_commit=%s\n' "$tag_commit" >> "$GITHUB_OUTPUT"
 
       - name: Check out verified candidate commit
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ steps.trust.outputs.tag_commit }}
           path: target/candidate
@@ -118,7 +118,7 @@ jobs:
           printf 'commit=%s\n' "$(scripts/resolve-formal-commit.sh)" >> "$GITHUB_OUTPUT"
 
       - name: Check out immutable formal source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: vinary-tree/libvgraph
           ref: ${{ steps.formal_source.outputs.commit }}
