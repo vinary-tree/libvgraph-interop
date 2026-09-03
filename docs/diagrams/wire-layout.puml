@@ -1,0 +1,34 @@
+@startuml
+!pragma layout smetana
+title libvgraph-interop version 1.0 canonical snapshot
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam rectangle {
+  BorderColor #1E3A5F
+  FontColor #0F172A
+  RoundCorner 8
+}
+
+rectangle "Header · 80 bytes" as snapshot_header #DBEAFE {
+  rectangle "bytes <latex>[0,8)</latex>\nmagic\nLVGSNP 00 01" as magic #BFDBFE
+  rectangle "bytes <latex>[8,24)</latex>\nschema\nLVGI-CSR-FWD-V1!" as schema #93C5FD
+  rectangle "bytes <latex>[24,32)</latex>\nversion 1.0 · zero flags" as version #60A5FA
+  rectangle "bytes <latex>[32,64)</latex>\nsemantic profile\n32 opaque bytes" as profile #A7F3D0
+  rectangle "bytes <latex>[64,72)</latex>\nvertex count · edge count" as counts #6EE7B7
+  rectangle "bytes <latex>[72,80)</latex>\npayload length" as length #34D399
+}
+
+rectangle "Payload · <latex>4(|V|+1+|E|)</latex> bytes" as payload #FEF3C7 {
+  rectangle "offsets <latex>[0,|V|+1)</latex>\ncanonical u32 little-endian" as offsets #FDE68A
+  rectangle "targets <latex>[0,|E|)</latex>\nrow-sorted unique u32 little-endian" as targets #FBBF24
+}
+
+snapshot_header -down-> payload : exact contiguous bytes
+offsets -right-> targets : <latex>\mathrm{offset}[|V|]=|E|</latex>
+
+note bottom of payload #FEE2E2
+No stable labels, reverse CSR, domain payloads,
+hashes, padding, trailing bytes, or unknown flags.
+end note
+@enduml

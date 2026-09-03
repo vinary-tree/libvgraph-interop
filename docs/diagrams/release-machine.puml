@@ -1,0 +1,38 @@
+@startuml release-machine
+title Formally constrained immutable release lifecycle
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam state {
+  BackgroundColor #E0F2FE
+  BorderColor #334155
+  FontColor #0F172A
+  ArrowColor #334155
+}
+
+state "Untrusted input\nworkflow-dispatch tag" as Input #FEF3C7
+state "Trusted candidate\nsigned tag = protected main" as Trusted #DBEAFE
+state "Gates complete\nproofs + tests + adversarial checks" as Gated #EDE9FE
+state "Draft release\ncompatible identity" as Draft #E0F2FE
+state "Registry verified\ncrate SHA-256 matches" as Registry #D1FAE5
+state "Assets complete\npackage + SBOM + evidence + manifest" as Assets #CCFBF1
+state "Immutable published release" as Published #A7F3D0
+state "Rejected\nno publication transition" as Rejected #FEE2E2
+
+[*] --> Input
+Input --> Trusted : protected signer and head
+Input --> Rejected : identity or policy failure
+Trusted --> Gated : every acceptance gate passes
+Trusted --> Rejected : any gate fails
+Gated --> Draft : create or reuse compatible draft
+Gated --> Rejected : incompatible existing state
+Draft --> Registry : absent crate published once\nor existing checksum matches
+Draft --> Rejected : registry mismatch or error
+Registry --> Assets : attest and reconcile exact assets
+Registry --> Rejected : incomplete or unequal assets
+Assets --> Published : one final draft=false mutation
+Assets --> Rejected : publication precondition fails
+Published --> Published : retry validates; no mutation
+Rejected --> [*]
+Published --> [*]
+@enduml

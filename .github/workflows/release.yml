@@ -1,0 +1,432 @@
+---
+name: Release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing signed semantic-version tag on the protected main commit
+        required: true
+        type: string
+      registry_auth:
+        description: crates.io authentication path
+        required: true
+        default: trusted-publisher
+        type: choice
+        options:
+          - trusted-publisher
+          - bootstrap-token
+
+permissions:
+  attestations: write
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  CARGO_BUILD_JOBS: "1"
+  CARGO_INCREMENTAL: "0"
+  CARGO_TERM_COLOR: always
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  publish:
+    name: Verify, publish, attest, and seal
+    runs-on: ubuntu-24.04
+    environment: crates-io
+    timeout-minutes: 90
+    steps:
+      - name: Check out protected release policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          path: target/trusted-policy
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify tag against protected signer policy
+        id: trust
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+            printf 'release dispatch must use protected main, found %s\n' "$GITHUB_REF" >&2
+            exit 1
+          fi
+          tag="$RELEASE_TAG"
+          trusted="$GITHUB_WORKSPACE/target/trusted-policy"
+          version_validator="$trusted/scripts/validate-release-version.sh"
+          if [[ ! -f "$version_validator" || -L "$version_validator" ]]; then
+            printf 'protected version validator is not a regular file: %s\n' \
+              "$version_validator" >&2
+            exit 1
+          fi
+          if [[ "$tag" != v* ]] \
+              || ! "$version_validator" "${tag#v}"; then
+            printf 'release tag is not canonical SemVer: %s\n' "$tag" >&2
+            exit 1
+          fi
+          allowed_signers="$trusted/.github/allowed_signers"
+          if [[ ! -f "$allowed_signers" || -L "$allowed_signers" ]]; then
+            printf 'protected signer policy is not a regular file: %s\n' "$allowed_signers" >&2
+            exit 1
+          fi
+          git -C "$trusted" fetch --force origin "refs/tags/$tag:refs/tags/$tag"
+          if [[ "$(git -C "$trusted" cat-file -t "refs/tags/$tag")" != tag ]]; then
+            printf 'release tag must be an annotated tag: %s\n' "$tag" >&2
+            exit 1
+          fi
+          git -C "$trusted" -c gpg.ssh.allowedSignersFile="$allowed_signers" verify-tag "$tag"
+          tag_commit="$(git -C "$trusted" rev-parse "$tag^{commit}")"
+          printf 'tag_commit=%s\n' "$tag_commit" >> "$GITHUB_OUTPUT"
+
+      - name: Check out verified candidate commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ steps.trust.outputs.tag_commit }}
+          path: target/candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify candidate is protected main
+        env:
+          TAG_COMMIT: ${{ steps.trust.outputs.tag_commit }}
+        run: |
+          set -euo pipefail
+          trusted_head="$(git -C target/trusted-policy rev-parse HEAD)"
+          candidate_head="$(git -C target/candidate rev-parse HEAD)"
+          if [[ "$TAG_COMMIT" == "$GITHUB_SHA" \
+              && "$TAG_COMMIT" == "$trusted_head" \
+              && "$TAG_COMMIT" == "$candidate_head" ]]; then
+            :
+          else
+            printf 'tag, dispatch, protected main, and candidate commits differ\n' >&2
+            printf 'tag=%s dispatch=%s main=%s candidate=%s\n' \
+              "$TAG_COMMIT" "$GITHUB_SHA" "$trusted_head" "$candidate_head" >&2
+            exit 1
+          fi
+
+      - name: Resolve immutable formal source binding
+        id: formal_source
+        working-directory: target/candidate
+        run: |
+          set -euo pipefail
+          scripts/check-portable-tools.sh bootstrap
+          printf 'commit=%s\n' "$(scripts/resolve-formal-commit.sh)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out immutable formal source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: vinary-tree/libvgraph
+          ref: ${{ steps.formal_source.outputs.commit }}
+          path: target/formal-source
+          persist-credentials: false
+
+      - name: Install Java for pinned PlantUML
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961  # v5.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install pinned Rust verification tools
+        working-directory: target/candidate
+        run: |
+          set -euo pipefail
+          rustup toolchain install stable --profile minimal
+          cargo +stable install cargo-deny --version 0.19.5 --locked
+          cargo +stable install cargo-fuzz --version 0.13.1 --locked
+          cargo +stable install cargo-mutants --version 27.1.0 --locked
+          cargo +stable install cargo-cyclonedx --version 0.5.9 --locked
+          rustup toolchain install 1.85.0 --profile minimal --component clippy,rustfmt
+          rustup toolchain install nightly-2026-04-21 --profile minimal --component rustfmt
+          rustup override set 1.85.0
+          python3 -m venv "$GITHUB_WORKSPACE/target/yamllint-venv"
+          "$GITHUB_WORKSPACE/target/yamllint-venv/bin/pip" install \
+            yamllint==1.37.1 pathspec==0.12.1 PyYAML==6.0.2
+          printf '%s\n' "$GITHUB_WORKSPACE/target/yamllint-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Verify tag-to-manifest identity
+        id: identity
+        working-directory: target/candidate
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          version="$(
+            cargo metadata --locked --no-deps --format-version 1 |
+              jq -er '.packages[] | select(.name == "libvgraph-interop") | .version'
+          )"
+          if [[ "$RELEASE_TAG" != "v$version" ]]; then
+            printf 'tag %s differs from manifest version %s\n' "$RELEASE_TAG" "$version" >&2
+            exit 1
+          fi
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+      - name: Provision checksum-pinned documentation tools
+        working-directory: target/candidate
+        run: |
+          mkdir -p target/tmp target/verification
+          scripts/provision-verification-tools.sh > target/verification/provision-tools.log 2>&1
+
+      - name: Run complete release gates
+        working-directory: target/candidate
+        env:
+          LIBVGRAPH_FORMAL_SOURCE: ${{ github.workspace }}/target/formal-source
+          LIBVGRAPH_INTEROP_RELEASE_SCOPED: "1"
+          LIBVGRAPH_INTEROP_FUZZ_SCOPED: "1"
+          LIBVGRAPH_INTEROP_MUTATION_SCOPED: "1"
+          LIBVGRAPH_INTEROP_BENCH_SCOPED: "1"
+          LIBVGRAPH_INTEROP_DOCS_SCOPED: "1"
+          TMPDIR: ${{ github.workspace }}/target/candidate/target/tmp
+        run: scripts/verify-release-candidate.sh
+
+      - name: Generate and validate CycloneDX SBOM
+        working-directory: target/candidate
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p target/release target/verification
+          sbom="target/release/libvgraph-interop-$VERSION.cdx.json"
+          scripts/generate-release-sbom.sh "$VERSION" target/release \
+            > target/verification/sbom.log 2>&1
+          jq -e --arg version "$VERSION" \
+            '.bomFormat == "CycloneDX"
+              and .specVersion == "1.5"
+              and .metadata.component.name == "libvgraph-interop"
+              and .metadata.component.version == $version' "$sbom" >/dev/null
+
+      - name: Reject incompatible release state
+        id: release_state
+        working-directory: target/candidate
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          TAG_COMMIT: ${{ steps.trust.outputs.tag_commit }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/immutable-releases" \
+            > target/verification/github-immutable-releases.json
+          jq -e '.enabled == true' target/verification/github-immutable-releases.json >/dev/null
+          gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            > target/verification/github-release-pages.json
+          jq --arg tag "$RELEASE_TAG" \
+            '[.[][] | select(.tag_name == $tag)]' \
+            target/verification/github-release-pages.json \
+            > target/verification/github-release-matches.json
+          match_count="$(jq 'length' target/verification/github-release-matches.json)"
+          if [[ "$match_count" -gt 1 ]]; then
+            printf 'multiple releases use tag %s\n' "$RELEASE_TAG" >&2
+            exit 1
+          fi
+          version_without_build="${RELEASE_TAG#v}"
+          version_without_build="${version_without_build%%+*}"
+          prerelease=false
+          if [[ "$version_without_build" == *-* ]]; then prerelease=true; fi
+          if [[ "$match_count" -eq 0 ]]; then
+            state=absent
+            release_id=0
+          else
+            jq -e --arg tag "$RELEASE_TAG" --arg commit "$TAG_COMMIT" \
+              --argjson prerelease "$prerelease" \
+              '.[0].tag_name == $tag
+                and .[0].name == $tag
+                and .[0].target_commitish == $commit
+                and .[0].prerelease == $prerelease
+                and (.[0].draft or .[0].immutable == true)' \
+              target/verification/github-release-matches.json >/dev/null
+            release_id="$(jq -er '.[0].id' target/verification/github-release-matches.json)"
+            if [[ "$(jq -r '.[0].draft' target/verification/github-release-matches.json)" == true ]]; then
+              state=draft
+            else
+              state=published
+            fi
+          fi
+          printf 'state=%s\nrelease_id=%s\n' "$state" "$release_id" \
+            > target/verification/release-state.log
+          printf 'state=%s\nrelease_id=%s\n' "$state" "$release_id" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        id: release
+        working-directory: target/candidate
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_STATE: ${{ steps.release_state.outputs.state }}
+          RELEASE_ID: ${{ steps.release_state.outputs.release_id }}
+          TAG_COMMIT: ${{ steps.trust.outputs.tag_commit }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          state="$RELEASE_STATE"
+          release_id="$RELEASE_ID"
+          if [[ "$state" == absent ]]; then
+            notes="docs/releases/v$VERSION.md"
+            if [[ ! -f "$notes" ]]; then
+              printf 'release notes are missing: %s\n' "$notes" >&2
+              exit 1
+            fi
+            version_without_build="${RELEASE_TAG#v}"
+            version_without_build="${version_without_build%%+*}"
+            prerelease=()
+            if [[ "$version_without_build" == *-* ]]; then prerelease=(--prerelease); fi
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --draft --verify-tag --target "$TAG_COMMIT" --title "$RELEASE_TAG" \
+              --notes-file "$notes" "${prerelease[@]}"
+            state=draft
+            gh api "repos/${GITHUB_REPOSITORY}/releases/tags/$RELEASE_TAG" \
+              > target/verification/github-release-draft.json
+            release_id="$(jq -er '.id' target/verification/github-release-draft.json)"
+          fi
+          printf 'state=%s\nrelease_id=%s\n' "$state" "$release_id" >> "$GITHUB_OUTPUT"
+
+      - name: Inspect crates.io registry state
+        id: registry_before
+        working-directory: target/candidate
+        env:
+          RELEASE_STATE: ${{ steps.release.outputs.state }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          package="target/package/libvgraph-interop-$VERSION.crate"
+          scripts/registry-release-status.sh libvgraph-interop "$VERSION" "$package" \
+            > target/verification/registry-status-before.log 2>&1
+          status="$(tail -n 1 target/verification/registry-status-before.log)"
+          if [[ "$RELEASE_STATE" == published && "$status" != present ]]; then
+            printf '%s\n' 'published GitHub release has no matching crates.io artifact' >&2
+            exit 1
+          fi
+          printf 'status=%s\n' "$status" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate with crates.io trusted publishing
+        if: steps.registry_before.outputs.status == 'absent' && inputs.registry_auth == 'trusted-publisher'
+        id: crates
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18  # v1.0.5
+
+      - name: Publish crate exactly once when absent
+        working-directory: target/candidate
+        env:
+          CARGO_REGISTRY_TOKEN: >-
+            ${{ inputs.registry_auth == 'trusted-publisher'
+              && steps.crates.outputs.token
+              || (inputs.registry_auth == 'bootstrap-token' && secrets.CRATES_IO_BOOTSTRAP_TOKEN) }}
+          REGISTRY_STATUS: ${{ steps.registry_before.outputs.status }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          package="target/package/libvgraph-interop-$VERSION.crate"
+          package_sha256="$(sha256sum "$package" | cut -d' ' -f1)"
+          if [[ "$REGISTRY_STATUS" == absent ]]; then
+            if [[ -z "$CARGO_REGISTRY_TOKEN" ]]; then
+              printf '%s\n' 'selected crates.io authentication path produced no token' >&2
+              exit 1
+            fi
+            cargo publish --locked > target/verification/cargo-publish.log 2>&1
+          else
+            printf '%s\n' 'registry artifact already exists with the candidate checksum' \
+              > target/verification/cargo-publish.log
+          fi
+          cargo package --locked > target/verification/package-rebuild.log 2>&1
+          rebuilt_sha256="$(sha256sum "$package" | cut -d' ' -f1)"
+          if [[ "$rebuilt_sha256" != "$package_sha256" ]]; then
+            printf 'package changed across publication: %s != %s\n' \
+              "$package_sha256" "$rebuilt_sha256" >&2
+            exit 1
+          fi
+
+      - name: Verify crates.io checksum
+        working-directory: target/candidate
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          package="target/package/libvgraph-interop-$VERSION.crate"
+          : > target/verification/registry-status-after.log
+          registry_status=absent
+          for attempt in $(seq 1 25); do
+            registry_status="$(
+              scripts/registry-release-status.sh libvgraph-interop "$VERSION" "$package"
+            )"
+            printf 'attempt=%s status=%s\n' "$attempt" "$registry_status" \
+              >> target/verification/registry-status-after.log
+            if [[ "$registry_status" == present ]]; then break; fi
+            sleep 5
+          done
+          if [[ "$registry_status" != present ]]; then
+            printf '%s\n' 'crates.io did not expose the candidate checksum' >&2
+            exit 1
+          fi
+
+      - name: Build permanent release evidence
+        working-directory: target/candidate
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: scripts/build-release-evidence.sh "$VERSION"
+
+      - name: Attest package build provenance
+        if: steps.release.outputs.state != 'published'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: >-
+            target/candidate/target/package/libvgraph-interop-${{ steps.identity.outputs.version }}.crate
+
+      - name: Attest package SBOM
+        if: steps.release.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.0.0
+        with:
+          subject-path: >-
+            target/candidate/target/package/libvgraph-interop-${{ steps.identity.outputs.version }}.crate
+          sbom-path: >-
+            target/candidate/target/release/libvgraph-interop-${{ steps.identity.outputs.version }}.cdx.json
+
+      - name: Attach complete immutable assets
+        working-directory: target/candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.release.outputs.release_id }}
+          RELEASE_STATE: ${{ steps.release.outputs.state }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          scripts/reconcile-release-assets.sh \
+            "$VERSION" "$RELEASE_TAG" "$RELEASE_ID" "$RELEASE_STATE" \
+            > target/verification/reconcile-assets.log 2>&1
+
+      - name: Publish immutable release
+        working-directory: target/candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.release.outputs.release_id }}
+          RELEASE_STATE: ${{ steps.release.outputs.state }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_STATE" == draft ]]; then
+            make_latest=true
+            if [[ "$RELEASE_TAG" == *-* ]]; then make_latest=false; fi
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/$RELEASE_ID" \
+              -F draft=false -f make_latest="$make_latest" \
+              > target/verification/github-release-published.json
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/releases/$RELEASE_ID" \
+              > target/verification/github-release-published.json
+          fi
+          jq -e --arg tag "$RELEASE_TAG" \
+            '.tag_name == $tag
+              and .draft == false
+              and .immutable == true
+              and (.assets | length) == 4
+              and (.assets | all(.state == "uploaded"))' \
+            target/verification/github-release-published.json >/dev/null
+
+      - name: Retain diagnostic verification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.0
+        with:
+          name: release-verification-${{ github.sha }}
+          path: |
+            target/candidate/target/verification
+            target/candidate/target/release
+          if-no-files-found: error
+          retention-days: 90

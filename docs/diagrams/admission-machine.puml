@@ -1,0 +1,70 @@
+@startuml
+!pragma layout smetana
+title Fail-closed snapshot admission sequence
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam sequence {
+  ArrowColor #334155
+  LifeLineBorderColor #475569
+  LifeLineBackgroundColor #F8FAFC
+  GroupBorderColor #475569
+  GroupBackgroundColor #F1F5F9
+}
+
+actor "Caller" as caller #FDE68A
+participant "libvgraph-interop\ndecoder" as decoder #93C5FD
+participant "BLAKE3\nhasher" as hasher #C4B5FD
+participant "libvgraph\ncanonical importer" as kernel #6EE7B7
+
+caller -> decoder : bytes · expected profile · limits · control
+activate decoder
+decoder -> decoder : initial control and complete-byte limit
+break#FEE2E2 initial cancellation or byte limit exceeded
+  decoder --> caller : typed rejection · no graph
+end
+decoder -> decoder : complete bytes admitted
+
+opt#EDE9FE verified entry
+  loop each 64 KiB digest chunk
+    decoder -> hasher : schema · profile · length · bytes
+    hasher --> decoder : updated state
+    decoder -> decoder : cancellation checkpoint
+  end
+  decoder -> decoder : constant-time 32-byte digest comparison
+  break#FEE2E2 cancelled or digest mismatch
+    decoder --> caller : typed rejection · no graph allocation
+  end
+  decoder -> decoder : digest admitted
+end
+
+decoder -> decoder : magic · schema · v1.0 · flags · profile
+break#FEE2E2 fixed header rejected
+  decoder --> caller : typed incompatibility or truncation
+end
+decoder -> decoder : checked length · counts · work · cancellation
+break#FEE2E2 arithmetic, length, or budget rejected
+  decoder --> caller : typed rejection · no graph allocation
+end
+decoder -> decoder : fallible minimum reservations
+break#FEE2E2 allocation failure
+  decoder --> caller : typed allocation rejection
+end
+
+loop#FEF3C7 each offset and target word
+  decoder -> decoder : read at monotone cursor
+  decoder -> decoder : checkpoint every 1,024 words
+end
+decoder -> kernel : dense nodes · offsets · targets
+break#FEE2E2 noncanonical compressed sparse row
+  kernel --> decoder : typed structural error
+  decoder --> caller : typed rejection · buffers released
+end
+kernel --> decoder : canonical owned graph
+decoder -> decoder : final cancellation checkpoint
+break#FEE2E2 cancelled before publication
+  decoder --> caller : typed rejection · graph released
+end
+decoder --> caller : exact canonical graph publication
+deactivate decoder
+@enduml

@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+tool_directory="$repository_root/target/verification-tools"
+repository_tmp="$repository_root/target/tmp"
+classpath=(
+  "$tool_directory/plantuml-1.2026.5.jar"
+  "$tool_directory/batik-all-1.19.jar"
+  "$tool_directory/xmlgraphics-commons-2.11.jar"
+  "$tool_directory/xml-apis-1.4.01.jar"
+  "$tool_directory/xml-apis-ext-1.3.04.jar"
+)
+mkdir -p "$repository_tmp"
+
+for required_jar in "${classpath[@]}"; do
+  if [[ ! -f "$required_jar" ]]; then
+    printf 'missing pinned renderer dependency; run scripts/provision-verification-tools.sh: %s\n' \
+      "$required_jar" >&2
+    exit 1
+  fi
+done
+
+joined_classpath="$(IFS=:; printf '%s' "${classpath[*]}")"
+renderer_log="$(mktemp "$repository_tmp/plantuml.XXXXXX.log")"
+cleanup() {
+  rm -f -- "$renderer_log"
+}
+trap cleanup EXIT
+
+set +e
+java -Djava.awt.headless=true -Djava.io.tmpdir="$repository_tmp" \
+  -cp "$joined_classpath" net.sourceforge.plantuml.Run -Playout=smetana "$@" \
+  > "$renderer_log" 2>&1
+renderer_status="$?"
+set -e
+cat "$renderer_log"
+if [[ "$renderer_status" -ne 0 ]]; then
+  exit "$renderer_status"
+fi
+if grep -E -q '(^|[.: ])(Exception|Error)(:|$)|ClassNotFound|Syntax Error' "$renderer_log"; then
+  printf '%s\n' 'PlantUML emitted an exception or syntax error despite a zero exit status' >&2
+  exit 1
+fi

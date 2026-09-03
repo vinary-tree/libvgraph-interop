@@ -1,0 +1,77 @@
+invariant_id	formal_layer	formal_artifact	formal_symbol	production_artifact	production_symbol
+INT-001	Rocq	formal/rocq/GraphSnapshot.v	decode_encode_round_trip	tests/contracts.rs	round_trip_and_unique_encoding
+INT-002	Rocq	formal/rocq/GraphSnapshot.v	canonical_encoding_unique	tests/golden.rs	exact_version_1_golden_vectors_are_stable
+INT-003	Rocq	formal/rocq/GraphSnapshot.v	unknown_schema_rejected	tests/malformed.rs	header_failure_matrix_is_exact
+INT-004	Rocq	formal/rocq/GraphSnapshot.v	unknown_major_rejected	tests/malformed.rs	header_failure_matrix_is_exact
+INT-005	Rocq	formal/rocq/GraphSnapshot.v	unknown_minor_rejected	tests/malformed.rs	header_failure_matrix_is_exact
+INT-006	Rocq	formal/rocq/GraphSnapshot.v	semantic_profile_mismatch_rejected	tests/contracts.rs	profile_and_digest_domains_are_separated
+INT-007	Rocq	formal/rocq/GraphSnapshot.v	admitted_snapshot_respects_vertex_limit	tests/malformed.rs	all_resource_limits_reject_before_graph_publication
+INT-008	Rocq	formal/rocq/GraphSnapshot.v	admitted_snapshot_respects_edge_limit	tests/malformed.rs	all_resource_limits_reject_before_graph_publication
+INT-009	Rocq	formal/rocq/GraphSnapshot.v	admitted_snapshot_respects_byte_limit	tests/malformed.rs	all_resource_limits_reject_before_graph_publication
+INT-010	Rocq	formal/rocq/GraphSnapshot.v	decoder_heap_is_linear	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-011	Rocq	formal/rocq/GraphSnapshot.v	decoder_work_is_linear	tests/contracts.rs	payload_length_and_maximum_count_arithmetic_are_exact
+INT-012	Rocq	formal/rocq/GraphSnapshot.v	decoder_step_progresses	tests/exhaustive.rs	every_directed_graph_through_three_vertices_refines_the_formal_contract
+INT-013	Rocq	formal/rocq/GraphSnapshot.v	decoder_step_preserves_validity	tests/malformed.rs	every_strict_prefix_and_trailing_suffix_is_rejected
+INT-014	Rocq	formal/rocq/GraphSnapshot.v	decoder_native_stack_is_constant	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-015	Rocq	formal/rocq/GraphSnapshot.v	digest_domain_separated	tests/contracts.rs	digest_changes_when_length_or_payload_changes
+INT-016	Rocq	formal/rocq/GraphSnapshot.v	digest_schema_separated	tests/contracts.rs	exact_version_schema_and_digest_constants_are_frozen
+INT-017	Rocq	formal/rocq/GraphSnapshot.v	digest_profile_separated	tests/contracts.rs	profile_and_digest_domains_are_separated
+INT-018	Rocq	formal/rocq/GraphSnapshot.v	canonical_enumeration_extensional	tests/contracts.rs	round_trip_and_unique_encoding
+INT-019	Rocq	formal/rocq/GraphSnapshot.v	canonical_rename_round_trip	tests/contracts.rs	lawful_dense_renaming_is_equivariant
+INT-020	TLC	formal/tla/InteropCodecMachine.tla	TypeOK	tests/contracts.rs	round_trip_and_unique_encoding
+INT-021	TLC	formal/tla/InteropCodecMachine.tla	CursorBound	tests/exhaustive.rs	every_directed_graph_through_three_vertices_refines_the_formal_contract
+INT-022	TLC	formal/tla/InteropCodecMachine.tla	ResourceBound	tests/contracts.rs	work_admission_and_cancellation_are_fail_atomic
+INT-023	TLC	formal/tla/InteropCodecMachine.tla	AllocationAfterLengthAdmission	tests/malformed.rs	all_resource_limits_reject_before_graph_publication
+INT-024	TLC	formal/tla/InteropCodecMachine.tla	RejectedNeverPublishes	tests/contracts.rs	digest_verification_rejects_stale_bytes
+INT-025	TLC	formal/tla/InteropCodecMachine.tla	ExactHasCompleteTape	tests/contracts.rs	round_trip_and_unique_encoding
+INT-026	TLC	formal/tla/InteropCodecMachine.tla	AdmissionSound	tests/malformed.rs	every_strict_prefix_and_trailing_suffix_is_rejected
+INT-027	TLC	formal/tla/InteropCodecMachine.tla	PublicationSound	tests/contracts.rs	work_admission_and_cancellation_are_fail_atomic
+INT-028	TLC	formal/tla/InteropCodecMachine.tla	CancellationSticky	tests/contracts.rs	work_admission_and_cancellation_are_fail_atomic
+INT-029	TLC	formal/tla/InteropCodecMachine.tla	NativeControlDepthBound	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-030	TLC	formal/tla/InteropCodecMachine.tla	SkipSchema	tests/malformed.rs	header_failure_matrix_is_exact
+INT-031	TLC	formal/tla/InteropCodecMachine.tla	SkipCanonical	tests/malformed.rs	canonical_csr_failure_matrix_is_exact
+INT-032	TLC	formal/tla/InteropCodecMachine.tla	IgnoreCancellation	tests/contracts.rs	work_admission_and_cancellation_are_fail_atomic
+INT-033	Z3	formal/smt/interop_snapshot.smt2	wire_length	tests/contracts.rs	payload_length_and_maximum_count_arithmetic_are_exact
+INT-034	Z3	formal/smt/interop_snapshot.smt2	heap_words	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-035	Z3	formal/smt/interop_snapshot.smt2	actual_work	tests/contracts.rs	payload_length_and_maximum_count_arithmetic_are_exact
+INT-036	Z3	formal/smt/interop_snapshot.smt2	preimage-domain	tests/contracts.rs	exact_version_schema_and_digest_constants_are_frozen
+INT-037	Z3	formal/smt/interop_snapshot.smt2	preimage-schema	tests/contracts.rs	exact_version_schema_and_digest_constants_are_frozen
+INT-038	Z3	formal/smt/interop_snapshot.smt2	preimage-profile	tests/contracts.rs	profile_and_digest_domains_are_separated
+INT-039	Z3	formal/smt/interop_snapshot.smt2	schema-ok	tests/malformed.rs	header_failure_matrix_is_exact
+INT-040	Z3	formal/smt/interop_snapshot.smt2	profile-ok	tests/contracts.rs	profile_and_digest_domains_are_separated
+INT-041	Z3	formal/smt/interop_snapshot.smt2	cancelled	tests/contracts.rs	work_admission_and_cancellation_are_fail_atomic
+INT-042	Z3	formal/smt/interop_snapshot.smt2	A stale/schema-mismatched candidate	tests/contracts.rs	digest_verification_rejects_stale_bytes
+INT-043	Z3	formal/smt/interop_snapshot.smt2	A fully admitted candidate	tests/contracts.rs	round_trip_and_unique_encoding
+INT-044	Model	formal/model/exhaustive_interop.rs	HEADER_BYTES	tests/golden.rs	exact_version_1_golden_vectors_are_stable
+INT-045	Model	formal/model/exhaustive_interop.rs	canonical_snapshot	tests/contracts.rs	round_trip_and_unique_encoding
+INT-046	Model	formal/model/exhaustive_interop.rs	fn encode	src/wire.rs	encode_snapshot
+INT-047	Model	formal/model/exhaustive_interop.rs	fn decode	src/wire.rs	decode_snapshot_with_control
+INT-048	Model	formal/model/exhaustive_interop.rs	validate_snapshot_with_work	tests/malformed.rs	canonical_csr_failure_matrix_is_exact
+INT-049	Model	formal/model/exhaustive_interop.rs	digest_invocation	tests/contracts.rs	digest_changes_when_length_or_payload_changes
+INT-050	Model	formal/model/exhaustive_interop.rs	assert_eq!(graph_count, 531)	tests/exhaustive.rs	every_directed_graph_through_three_vertices_refines_the_formal_contract
+INT-051	Model	formal/model/exhaustive_interop.rs	truncation_count	tests/exhaustive.rs	every_directed_graph_through_three_vertices_refines_the_formal_contract
+INT-052	Model	formal/model/exhaustive_interop.rs	assert_golden_vectors	tests/golden.rs	exact_version_1_golden_vectors_are_stable
+INT-053	Model	formal/model/exhaustive_interop.rs	assert_malformed_rejections	tests/malformed.rs	header_failure_matrix_is_exact
+INT-054	Model	formal/model/exhaustive_interop.rs	renamed_edges	tests/contracts.rs	lawful_dense_renaming_is_equivariant
+INT-055	Model	formal/model/exhaustive_interop.rs	assert_digest_domains	tests/contracts.rs	digest_changes_when_length_or_payload_changes
+INT-056	Model	formal/model/exhaustive_interop.rs	assert_deep_small_stack	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-057	Verus	formal/verus/interop_refinement.rs	maximum_v1_wire_length_fits_u64	tests/contracts.rs	payload_length_and_maximum_count_arithmetic_are_exact
+INT-058	Verus	formal/verus/interop_refinement.rs	maximum_v1_heap_words_fit_u64	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-059	Verus	formal/verus/interop_refinement.rs	admission_is_fail_closed	tests/malformed.rs	all_resource_limits_reject_before_graph_publication
+INT-060	Verus	formal/verus/interop_refinement.rs	decoder_cursor_step_is_bounded	tests/exhaustive.rs	every_directed_graph_through_three_vertices_refines_the_formal_contract
+INT-061	Verus	formal/verus/interop_refinement.rs	validation_work_is_linear	tests/contracts.rs	payload_length_and_maximum_count_arithmetic_are_exact
+INT-062	Verus	formal/verus/interop_refinement.rs	fixed_header_prevents_empty_encoding	tests/golden.rs	exact_version_1_golden_vectors_are_stable
+INT-063	RequiredRed	tests/interop_contract_properties.rs	contract_stale_digest_rejection	tests/contracts.rs	digest_verification_rejects_stale_bytes
+INT-064	RequiredRed	tests/interop_contract_properties.rs	contract_exact_cross_version_policy	tests/malformed.rs	header_failure_matrix_is_exact
+INT-065	RequiredRed	tests/interop_contract_properties.rs	libvgraph_interop	src/lib.rs	decode_verified_snapshot
+INT-066	TLC	formal/tla/InteropCodecMachine.tla	GrowNativeDepth	tests/stack_safety.rs	deep_codec_lifecycle_is_native_stack_independent
+INT-067	TLC	formal/tla/ReleaseMachine.tla	PublishedUsesProtectedTrust	.github/workflows/release.yml	Verify tag against protected signer policy
+INT-068	TLC	formal/tla/ReleaseMachine.tla	PublishedUsesProtectedHead	.github/workflows/release.yml	Verify candidate is protected main
+INT-069	TLC	formal/tla/ReleaseMachine.tla	PublishedHasPassedGates	.github/workflows/release.yml	Run complete release gates
+INT-070	TLC	formal/tla/ReleaseMachine.tla	PublishedFromDraft	.github/workflows/release.yml	Create draft release
+INT-071	TLC	formal/tla/ReleaseMachine.tla	PublishedHasCompleteAssets	.github/workflows/release.yml	Attach complete immutable assets
+INT-072	TLC	formal/tla/ReleaseMachine.tla	PublishedRegistryMatches	.github/workflows/release.yml	Verify crates.io checksum
+INT-073	TLC	formal/tla/ReleaseMachine.tla	AtMostOnePublication	.github/workflows/release.yml	Publish immutable release
+INT-074	TLC	formal/tla/ReleaseMachine.tla	RejectedNeverPublishes	.github/workflows/release.yml	Reject incompatible release state
+INT-075	TLC	formal/tla/ReleaseMachine.tla	PublishedHasPortableToolClosure	scripts/check-portable-tools.sh	portable_tool_closure_is_explicit
+INT-076	TLC	formal/tla/ReleaseMachine.tla	PublishedUsesBoundFormalSource	scripts/check-formal-source-binding.sh	formal_source_matches_binding
