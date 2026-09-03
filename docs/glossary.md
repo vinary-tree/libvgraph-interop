@@ -19,7 +19,7 @@ usage documents. Individual documents define local symbols before using them.
 | Rocq | The [Rocq Prover](https://rocq-prover.org/docs/), an interactive theorem prover used for pure codec and arithmetic theorems. |
 | Set | The category whose objects are sets and whose morphisms are total functions. The snapshot laws use this category explicitly. |
 | Strongly connected component (SCC) | A maximal directed subgraph in which every vertex reaches every other. The foundational linear-time result is Tarjan, [“Depth-First Search and Linear Graph Algorithms”](https://doi.org/10.1137/0201010). SCC algorithms belong to `libvgraph`, not this crate. |
-| Secure Hash Algorithm 256-bit (SHA-256) | The NIST-standardized cryptographic hash used for release-asset and evidence manifests ([FIPS 180-4](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf)). |
+| Secure Hash Algorithm 256-bit (SHA-256) | The NIST-standardized cryptographic hash used for release-asset and evidence manifests ([FIPS 180-4](https://www.nist.gov/publications/secure-hash-standard)). |
 | Secure Shell (SSH) | The authenticated protocol whose Ed25519 signatures bind release tags and formal commits to an allowlisted maintainer identity. |
 | Software bill of materials (SBOM) | A machine-readable inventory of an artifact and its dependencies. Release assets use CycloneDX 1.5 JSON. |
 | Scalable Vector Graphics (SVG) | The W3C vector-image format defined by [SVG 2](https://www.w3.org/TR/SVG2/). Checked-in diagrams are byte-reproducible SVG files. |
