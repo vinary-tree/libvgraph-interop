@@ -1,0 +1,115 @@
+---
+name: CI
+
+"on":
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_BUILD_JOBS: "1"
+  CARGO_INCREMENTAL: "0"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  msrv-release-gates:
+    name: Rust 1.85 complete portable gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out libvgraph-interop
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - name: Check out immutable formal source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          repository: vinary-tree/libvgraph
+          ref: 59952b0cccbdd32f18f2c13f87c539c7e5427e5d
+          path: target/formal-source
+          persist-credentials: false
+
+      - name: Install Java for pinned PlantUML
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961  # v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install pinned portable verification tools
+        run: |
+          set -euo pipefail
+          rustup toolchain install stable --profile minimal
+          cargo +stable install cargo-deny --version 0.19.5 --locked
+          rustup toolchain install 1.85.0 --profile minimal --component clippy,rustfmt
+          rustup toolchain install nightly-2026-04-21 --profile minimal --component rustfmt
+          rustup override set 1.85.0
+          python3 -m venv "$GITHUB_WORKSPACE/target/yamllint-venv"
+          "$GITHUB_WORKSPACE/target/yamllint-venv/bin/pip" install \
+            yamllint==1.37.1 pathspec==0.12.1 PyYAML==6.0.2
+          printf '%s\n' "$GITHUB_WORKSPACE/target/yamllint-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Provision checksum-pinned documentation tools
+        run: |
+          mkdir -p target/tmp target/verification
+          scripts/provision-verification-tools.sh > target/verification/provision-tools.log 2>&1
+
+      - name: Run complete portable release gates
+        env:
+          LIBVGRAPH_FORMAL_SOURCE: ${{ github.workspace }}/target/formal-source
+          LIBVGRAPH_INTEROP_DOCS_SCOPED: "1"
+          TMPDIR: ${{ github.workspace }}/target/tmp
+        run: scripts/verify-portable.sh
+
+      - name: Retain verification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: msrv-verification-${{ github.sha }}
+          path: target/verification
+          if-no-files-found: error
+          retention-days: 14
+
+  current-stable:
+    name: Current stable Rust compatibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out libvgraph-interop
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - name: Install current stable Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt
+          rustup override set stable
+
+      - name: Verify current stable Rust
+        env:
+          PROPTEST_CASES: "256"
+          TMPDIR: ${{ github.workspace }}/target/tmp
+        run: |
+          mkdir -p target/tmp target/verification
+          cargo fmt --all -- --check > target/verification/stable-fmt.log 2>&1
+          cargo check --locked --all-targets > target/verification/stable-check.log 2>&1
+          cargo clippy --locked --all-targets -- -D warnings > target/verification/stable-clippy.log 2>&1
+          cargo test --locked --all-targets > target/verification/stable-test.log 2>&1
+          RUSTDOCFLAGS=-Dwarnings cargo doc --locked --no-deps > target/verification/stable-doc.log 2>&1
+
+      - name: Retain stable-Rust evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: stable-verification-${{ github.sha }}
+          path: target/verification
+          if-no-files-found: error
+          retention-days: 14

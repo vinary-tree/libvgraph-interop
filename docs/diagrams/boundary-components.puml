@@ -1,0 +1,24 @@
+@startuml
+!pragma layout smetana
+title libvgraph-interop ownership and dependency boundary
+left to right direction
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam componentStyle rectangle
+
+component "Domain adapter\nstable labels · profile · provenance" as domain #FDE68A
+component "libvgraph-interop\nwire · limits · digest" as interop #93C5FD
+component "libvgraph\ncanonical CSR · SCC · waves" as kernel #6EE7B7
+database "Cache / transport\nopaque bytes + expected digest" as cache #C4B5FD
+
+domain -right-> interop : encode / admit
+interop -right-> kernel : canonical graph API
+domain -down-> cache : publish metadata
+cache -up-> interop : bounded bytes
+
+note bottom of kernel #DCFCE7
+No serialization, hashing, parser,
+CPG, or domain-fact dependency
+end note
+@enduml

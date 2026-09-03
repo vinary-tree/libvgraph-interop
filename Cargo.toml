@@ -1,0 +1,62 @@
+[package]
+name = "libvgraph-interop"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+authors = ["Dylon Edwards <dylon@f1r3fly.io>"]
+description = "Versioned canonical snapshots and domain-separated digests for libvgraph"
+license = "Apache-2.0"
+repository = "https://github.com/vinary-tree/libvgraph-interop"
+homepage = "https://github.com/vinary-tree/libvgraph-interop"
+documentation = "https://docs.rs/libvgraph-interop"
+readme = "README.md"
+publish = ["crates-io"]
+keywords = ["graph", "csr", "serialization", "digest", "stack-safe"]
+categories = ["encoding", "data-structures", "algorithms"]
+include = [
+    "/.github/**",
+    "/.vinary-doc-lint.toml",
+    "/.yamllint.yml",
+    "/src/**",
+    "/tests/**",
+    "/examples/**",
+    "/benches/**",
+    "/docs/**",
+    "/formal/**",
+    "/fuzz/Cargo.lock",
+    "/fuzz/Cargo.toml",
+    "/fuzz/corpus/**",
+    "/fuzz/fuzz_targets/**",
+    "/scripts/**",
+    "/Cargo.toml",
+    "/Cargo.lock",
+    "/deny.toml",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+    "/SECURITY.md",
+    "/LICENSE",
+]
+
+[dependencies]
+blake3 = "=1.8.7"
+libvgraph = "=0.1.0"
+
+[dev-dependencies]
+criterion = "=0.5.1"
+proptest = "=1.11.0"
+
+[[bench]]
+name = "codec"
+harness = false
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
+unwrap_used = "deny"
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,0 +1,26 @@
+@startuml
+!pragma layout smetana
+title Canonical snapshot left-inverse law in Set
+left to right direction
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam rectangle {
+  BorderColor #334155
+  FontColor #0F172A
+  RoundCorner 8
+}
+
+rectangle "Canonical topologies\n<latex>C</latex>" as source #6EE7B7
+rectangle "Admitted bytes for profile\n<latex>B_{1,p}</latex>" as bytes #93C5FD
+rectangle "Canonical topologies\n<latex>C</latex>" as result #6EE7B7
+
+source -right-> bytes : encode <latex>E_p</latex>
+bytes -right-> result : restricted decode <latex>D_p</latex>
+source -down-> result : identity <latex>\mathrm{id}_C</latex>
+
+note bottom of bytes #FEF3C7
+The triangle commutes:
+<latex>D_p \circ E_p = \mathrm{id}_C</latex>
+end note
+@enduml
