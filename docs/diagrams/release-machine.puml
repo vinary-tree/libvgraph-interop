@@ -2,6 +2,7 @@
 title Formally constrained immutable release lifecycle
 skinparam backgroundColor #F8FAFC
 skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
 skinparam state {
   BackgroundColor #E0F2FE
   BorderColor #334155

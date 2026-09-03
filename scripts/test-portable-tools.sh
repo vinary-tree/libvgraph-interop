@@ -24,6 +24,13 @@ portable_tool_is_declared() {
   [[ "$matches" -eq 1 ]]
 }
 
+diagram_font_is_explicit() {
+  local source="$1"
+  [[ -f "$source" && ! -L "$source" ]] \
+    && [[ "$(grep -F -x -c -- 'skinparam defaultFontName DejaVu Sans' \
+      "$source" || true)" -eq 1 ]]
+}
+
 portable_tool_closure_is_explicit bash grep
 if portable_tool_closure_is_explicit __libvgraph_missing_command__ \
     > "$run_directory/missing.log" 2>&1; then
@@ -33,6 +40,22 @@ fi
 
 "$checker" bootstrap > "$run_directory/bootstrap.log"
 "$checker" complete > "$run_directory/complete.log"
+for diagram_source in "$repository_root"/docs/diagrams/*.puml; do
+  if ! diagram_font_is_explicit "$diagram_source"; then
+    printf 'PlantUML source does not select the deterministic font exactly once: %s\n' \
+      "$diagram_source" >&2
+    exit 1
+  fi
+  font_mutant="$run_directory/${diagram_source##*/}"
+  cp "$diagram_source" "$font_mutant"
+  SEARCH='skinparam defaultFontName DejaVu Sans' REPLACEMENT='' perl -0pi -e \
+    's/\Q$ENV{SEARCH}\E/$ENV{REPLACEMENT}/' "$font_mutant"
+  if diagram_font_is_explicit "$font_mutant"; then
+    printf 'implicit-font diagram mutant unexpectedly passed: %s\n' \
+      "$diagram_source" >&2
+    exit 1
+  fi
+done
 if ! plantuml_layout_is_internal "$repository_root/scripts/plantuml"; then
   printf '%s\n' 'PlantUML wrapper does not select the pinned internal Smetana layout' >&2
   exit 1
