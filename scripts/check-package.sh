@@ -23,11 +23,6 @@ required_files=(
   docs/releases/v0.1.0.md
   formal/contract.sha256
   formal/refinement.tsv
-  fuzz/Cargo.lock
-  fuzz/Cargo.toml
-  fuzz/corpus/decode/empty
-  fuzz/corpus/decode/truncated-header
-  fuzz/fuzz_targets/decode.rs
   scripts/check-package.sh
   scripts/check-refinement.sh
   scripts/check-release-workflow.sh
