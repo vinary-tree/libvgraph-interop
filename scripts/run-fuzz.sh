@@ -68,7 +68,7 @@ if [[ "$lock_digest_after" != "$lock_digest_before" ]]; then
   printf '%s\n' 'fuzz execution changed fuzz/Cargo.lock' >&2
   exit 1
 fi
-if ! rg -q '#[0-9]+[[:space:]]+DONE' "$evidence"; then
+if ! grep -E -q '#[0-9]+[[:space:]]+DONE' "$evidence"; then
   printf '%s\n' 'libFuzzer did not report a completed bounded campaign' >&2
   exit 1
 fi

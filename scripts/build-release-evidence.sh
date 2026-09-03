@@ -14,7 +14,7 @@ release_directory="$repository_root/target/release"
 package="$repository_root/target/package/libvgraph-interop-$version.crate"
 sbom="$release_directory/libvgraph-interop-$version.cdx.json"
 source_commit="$(git -C "$repository_root" rev-parse HEAD)"
-formal_commit='59952b0cccbdd32f18f2c13f87c539c7e5427e5d'
+formal_commit='83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697'
 stage_name="libvgraph-interop-$version-evidence-$source_commit"
 stage="$release_directory/$stage_name"
 bundle="$release_directory/$stage_name.tar"
@@ -52,7 +52,7 @@ if [[ -e "$stage" || -e "$bundle" || -e "$asset_manifest" ]]; then
 fi
 
 if [[ ! -f "$evidence_layout" || -L "$evidence_layout" ]] \
-    || rg -v -q '^[A-Za-z0-9][A-Za-z0-9._-]*$' "$evidence_layout" \
+    || grep -E -v -q '^[A-Za-z0-9][A-Za-z0-9._-]*$' "$evidence_layout" \
     || [[ "$(sort "$evidence_layout" | uniq -d | wc -l)" -ne 0 ]]; then
   printf 'release evidence layout is invalid: %s\n' "$evidence_layout" >&2
   exit 1

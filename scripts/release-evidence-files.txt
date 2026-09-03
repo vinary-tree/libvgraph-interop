@@ -22,6 +22,9 @@ mutation-timeout.txt
 mutation.log
 package-inventory.log
 package-rebuild.log
+portable-tool-bootstrap.log
+portable-tool-closure.log
+portable-tool-properties.log
 provision-tools.log
 refinement.log
 registry-release-properties.log

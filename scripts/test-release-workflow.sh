@@ -13,7 +13,7 @@ replace_literal() {
   local file="$1"
   local search="$2"
   local replacement="$3"
-  if [[ "$(rg -F -c -- "$search" "$file")" -lt 1 ]]; then
+  if [[ "$(grep -F -c -- "$search" "$file" || true)" -lt 1 ]]; then
     printf 'release workflow test cannot find mutation target: %s\n' "$search" >&2
     exit 1
   fi

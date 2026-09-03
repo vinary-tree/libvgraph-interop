@@ -26,7 +26,7 @@ fi
   rustc -Vv
   cargo -V
   lscpu
-  rg '^(Cpus_allowed_list|Mems_allowed_list):' /proc/self/status
+  grep -E '^(Cpus_allowed_list|Mems_allowed_list):' /proc/self/status
   if [[ -r /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
     sed -n '1p' /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
   else
@@ -40,12 +40,12 @@ for benchmark in \
   canonical_snapshot/decode/1000 \
   canonical_snapshot/encode/100000 \
   canonical_snapshot/decode/100000; do
-  if ! rg -F -q -- "$benchmark" "$evidence"; then
+  if ! grep -F -q -- "$benchmark" "$evidence"; then
     printf 'benchmark evidence omits workload: %s\n' "$benchmark" >&2
     exit 1
   fi
 done
-if [[ "$(rg -c 'time:' "$evidence")" -lt 4 ]]; then
+if [[ "$(grep -c 'time:' "$evidence" || true)" -lt 4 ]]; then
   printf '%s\n' 'benchmark evidence omits one or more Criterion estimates' >&2
   exit 1
 fi

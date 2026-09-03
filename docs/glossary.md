@@ -15,6 +15,7 @@ usage documents. Individual documents define local symbols before using them.
 | Minimum supported Rust version (MSRV) | The oldest Rust toolchain that the crate promises to support and tests as a release gate. |
 | Native stack depth | The number of active machine call frames. A stack-safe graph operation keeps this independent of graph depth by using flat iterative state. |
 | OpenID Connect (OIDC) | A federated identity protocol used by GitHub Actions and crates.io to exchange a short-lived, workflow-bound publishing credential instead of storing a long-lived token. |
+| Portable tool closure | The explicit finite set of external commands and pinned Cargo plugins required by the release gates. Both bootstrap and post-provisioning closures are checked before acceptance evidence can be complete. |
 | Resident set size (RSS) | The portion of a process's memory resident in physical memory, reported by Linux through [`/proc`](https://docs.kernel.org/filesystems/proc.html) and bounded for campaign verification. |
 | Rocq | The [Rocq Prover](https://rocq-prover.org/docs/), an interactive theorem prover used for pure codec and arithmetic theorems. |
 | Set | The category whose objects are sets and whose morphisms are total functions. The snapshot laws use this category explicitly. |

@@ -11,14 +11,14 @@ fail() {
 
 require_literal() {
   local literal="$1"
-  if ! rg -F -q -- "$literal" "$workflow"; then
+  if ! grep -F -q -- "$literal" "$workflow"; then
     fail "missing required text: $literal"
   fi
 }
 
 forbid_pattern() {
   local pattern="$1"
-  if rg -q -- "$pattern" "$workflow"; then
+  if grep -E -q -- "$pattern" "$workflow"; then
     fail "forbidden pattern is present: $pattern"
   fi
 }
@@ -26,11 +26,11 @@ forbid_pattern() {
 step_line() {
   local name="$1"
   local count
-  count="$(rg -F -c -- "- name: $name" "$workflow")"
+  count="$(grep -F -c -- "- name: $name" "$workflow" || true)"
   if [[ "$count" -ne 1 ]]; then
     fail "expected exactly one step named '$name', found $count"
   fi
-  rg -F -n -- "- name: $name" "$workflow" | cut -d: -f1
+  grep -F -n -- "- name: $name" "$workflow" | cut -d: -f1
 }
 
 if [[ ! -f "$workflow" || -L "$workflow" ]]; then
@@ -98,10 +98,10 @@ for required_step in "${ordered_steps[@]}"; do
   previous_line="$current_line"
 done
 
-if [[ "$(rg -F -o -- 'cargo publish --locked' "$workflow" | wc -l)" -ne 1 ]]; then
+if [[ "$(grep -F -o -- 'cargo publish --locked' "$workflow" | wc -l)" -ne 1 ]]; then
   fail 'the crate publication command must occur exactly once'
 fi
-if [[ "$(rg -F -o -- '-F draft=false' "$workflow" | wc -l)" -ne 1 ]]; then
+if [[ "$(grep -F -o -- '-F draft=false' "$workflow" | wc -l)" -ne 1 ]]; then
   fail 'the release publication mutation must occur exactly once'
 fi
 

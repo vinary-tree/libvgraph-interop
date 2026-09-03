@@ -45,7 +45,7 @@ evidence_layout="$repository_root/scripts/release-evidence-files.txt"
 mkdir -p "$release_directory" "$evidence_directory"
 
 if [[ ! -f "$evidence_layout" || -L "$evidence_layout" ]] \
-    || rg -v -q '^[A-Za-z0-9][A-Za-z0-9._-]*$' "$evidence_layout" \
+    || grep -E -v -q '^[A-Za-z0-9][A-Za-z0-9._-]*$' "$evidence_layout" \
     || [[ "$(sort "$evidence_layout" | uniq -d | wc -l)" -ne 0 ]]; then
   printf 'release evidence layout is invalid: %s\n' "$evidence_layout" >&2
   exit 1
@@ -167,7 +167,7 @@ validate_evidence_bundle() {
   jq -e \
     --arg version "$version" \
     --arg source_commit "$source_commit" \
-    --arg formal_commit '59952b0cccbdd32f18f2c13f87c539c7e5427e5d' \
+    --arg formal_commit '83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697' \
     --arg package_sha256 "$(sha256sum "$package" | cut -d' ' -f1)" \
     --arg sbom_sha256 "$(sha256sum "$sbom" | cut -d' ' -f1)" \
     '.schema == "libvgraph-interop-release-evidence-v1"
@@ -179,7 +179,7 @@ validate_evidence_bundle() {
     "$stage/evidence.json" >/dev/null
 
   if [[ ! -s "$stage/SHA256SUMS" ]] \
-      || rg -v -q '^[0-9a-f]{64}  \./[A-Za-z0-9._-]+$' "$stage/SHA256SUMS"; then
+      || grep -E -v -q '^[0-9a-f]{64}  \./[A-Za-z0-9._-]+$' "$stage/SHA256SUMS"; then
     printf '%s\n' 'evidence archive contains a malformed internal manifest entry' >&2
     return 1
   fi

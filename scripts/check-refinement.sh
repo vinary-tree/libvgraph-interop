@@ -3,7 +3,7 @@ set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 formal_source="${LIBVGRAPH_FORMAL_SOURCE:-$repository_root/../libvgraph-vco-e2-interop-formal}"
-formal_commit='59952b0cccbdd32f18f2c13f87c539c7e5427e5d'
+formal_commit='83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697'
 ledger="$repository_root/formal/refinement.tsv"
 manifest="$repository_root/formal/contract.sha256"
 evidence_directory="$repository_root/target/verification"
@@ -38,8 +38,8 @@ if ! diff -u "$formal_projection" "$refinement_projection"; then
 fi
 
 row_count="$(wc -l < "$refinement_projection")"
-if [[ "$row_count" -ne 74 ]]; then
-  printf 'expected exactly 74 refinement rows, found %s\n' "$row_count" >&2
+if [[ "$row_count" -ne 75 ]]; then
+  printf 'expected exactly 75 refinement rows, found %s\n' "$row_count" >&2
   exit 1
 fi
 
@@ -80,7 +80,7 @@ while IFS=$'\t' read -r invariant_id formal_layer formal_artifact formal_symbol 
     printf 'missing production artifact for %s: %s\n' "$invariant_id" "$production_path" >&2
     exit 1
   fi
-  if ! rg -F -q -- "$production_symbol" "$production_path"; then
+  if ! grep -F -q -- "$production_symbol" "$production_path"; then
     printf 'missing production symbol for %s: %s in %s\n' \
       "$invariant_id" "$production_symbol" "$production_path" >&2
     exit 1
@@ -88,7 +88,7 @@ while IFS=$'\t' read -r invariant_id formal_layer formal_artifact formal_symbol 
   expected_id=$((expected_id + 1))
 done < "$ledger"
 
-if rg -n '\b(TODO|FIXME|HACK|XXX|PENDING)\b' \
+if grep -R -E -n '(^|[^[:alnum:]_])(TODO|FIXME|HACK|XXX|PENDING)($|[^[:alnum:]_])' \
   "$repository_root/src" "$repository_root/tests" "$repository_root/formal"; then
   printf '%s\n' 'incomplete marker found in a refinement artifact' >&2
   exit 1

@@ -15,12 +15,14 @@ The campaign tests these falsifiable claims:
 4. Work and heap usage are linear in vertices plus edges.
 5. Native call depth is independent of graph depth.
 6. Concurrent independent requests cannot change results.
+7. A release cannot publish unless every command used by its portable gates belongs to the
+   explicitly checked tool closure.
 
 ## Formal source
 
 The machine-checked source is signed immutable commit
-[`59952b0cccbdd32f18f2c13f87c539c7e5427e5d`](https://github.com/vinary-tree/libvgraph/commit/59952b0cccbdd32f18f2c13f87c539c7e5427e5d)
-in `vinary-tree/libvgraph`. `formal/contract.sha256` records the exact hashes of all 26
+[`83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697`](https://github.com/vinary-tree/libvgraph/commit/83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697)
+in `vinary-tree/libvgraph`. `formal/contract.sha256` records the exact hashes of all 27
 repository-resident contract inputs, and
 `scripts/verify-formal-provenance.sh` checks them from the commit object rather than the current
 worktree.
@@ -30,7 +32,7 @@ worktree.
 | Rocq | Do the pure codec, limit, cursor, digest-tag, and renaming theorems close? | 19 closed assumption reports |
 | TLC | Can malformed or cancelled requests publish under interleaving? | 33,270 generated states, no positive error |
 | TLA+ mutants | Are schema, canonicality, cancellation, and bounded native depth causally necessary? | Four intended mutants each violate its targeted invariant |
-| Release TLC | Can an untrusted, unverified, incomplete, mismatched, or repeated candidate publish? | 176 generated states, 128 distinct states, no positive error; seven causal mutants rejected |
+| Release TLC | Can an untrusted, unverified, tool-incomplete, asset-incomplete, mismatched, or repeated candidate publish? | 332 generated states, 236 distinct states, no positive error; eight causal mutants rejected |
 | Z3 | Are maximum lengths, heap words, work, and tagged preimages arithmetically consistent? | 9 unsatisfiable obligations and 2 constructive witnesses |
 | Verus | Do executable arithmetic refinements prove without errors? | 6 verified, 0 errors |
 | Independent model | Do exact bytes agree over the bounded complete corpus? | Counts below |
@@ -99,7 +101,7 @@ structure, this is the production refinement of the formal native-depth invarian
 
 ## Evidence binding
 
-`formal/refinement.tsv` contains all 74 ordered formal-to-production mappings. The refinement gate
+`formal/refinement.tsv` contains all 75 ordered formal-to-production mappings. The refinement gate
 exactly projects the frozen ledger, resolves every formal symbol in the signed commit, and resolves
 every production symbol in the candidate. Release acceptance additionally requires all production
 evidence to name the same clean candidate commit. The release evidence bundle and its SHA-256

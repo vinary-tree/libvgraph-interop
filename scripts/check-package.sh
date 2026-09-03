@@ -24,6 +24,7 @@ required_files=(
   formal/contract.sha256
   formal/refinement.tsv
   scripts/check-package.sh
+  scripts/check-portable-tools.sh
   scripts/check-refinement.sh
   scripts/check-release-workflow.sh
   scripts/build-release-evidence.sh
@@ -38,6 +39,7 @@ required_files=(
   scripts/test-release-workflow.sh
   scripts/test-reconcile-release-assets.sh
   scripts/test-registry-release-status.sh
+  scripts/test-portable-tools.sh
   scripts/test-release-sbom.sh
   scripts/test-release-version.sh
   scripts/validate-release-version.sh
@@ -48,12 +50,12 @@ required_files=(
 )
 
 for required_file in "${required_files[@]}"; do
-  if ! rg -F -x -q -- "$required_file" "$inventory"; then
+  if ! grep -F -x -q -- "$required_file" "$inventory"; then
     printf 'publish archive inventory omits required file: %s\n' "$required_file" >&2
     exit 1
   fi
 done
-if rg -q '(^|/)(target|\.git)(/|$)' "$inventory"; then
+if grep -E -q '(^|/)(target|\.git)(/|$)' "$inventory"; then
   printf '%s\n' 'publish archive inventory contains generated or Git state' >&2
   exit 1
 fi

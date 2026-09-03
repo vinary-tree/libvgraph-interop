@@ -3,7 +3,7 @@ set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 formal_source="${LIBVGRAPH_FORMAL_SOURCE:-$repository_root/../libvgraph-vco-e2-interop-formal}"
-formal_commit='59952b0cccbdd32f18f2c13f87c539c7e5427e5d'
+formal_commit='83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697'
 manifest="$repository_root/formal/contract.sha256"
 allowed_signers="$repository_root/.github/allowed_signers"
 expected_artifacts=(
@@ -26,6 +26,7 @@ expected_artifacts=(
   formal/tla/ReleaseMachineRepublish.cfg
   formal/tla/ReleaseMachineSkipEvidence.cfg
   formal/tla/ReleaseMachineSkipGates.cfg
+  formal/tla/ReleaseMachineSkipPortableTools.cfg
   formal/tla/ReleaseMachineSkipProtectedHead.cfg
   formal/tla/ReleaseMachineSkipRegistryChecksum.cfg
   formal/verus/interop_refinement.rs

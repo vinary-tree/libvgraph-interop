@@ -31,18 +31,19 @@ refinement admits one path:
 
 ```text
 protected signer and protected main
-→ complete gates
+→ explicit portable tool closure and complete gates
 → compatible draft
 → equal crates.io checksum
 → complete assets
 → immutable publication
 ```
 
-The complete gates include formal provenance, all 74 formal-to-production mappings, formatting,
-compilation, strict Clippy, tests, doctests, rustdoc, dependency policy, workflow policy,
-documentation, package inventory, 100,000 arbitrary-byte fuzz executions, mutation testing with
-no survivor or timeout, and all four performance workloads. Each command writes its complete
-output below repository-backed `target/verification`.
+The complete gates first verify the bootstrap command set, then verify the complete command and
+pinned-plugin closure after provisioning. They include formal provenance, all 75
+formal-to-production mappings, formatting, compilation, strict Clippy, tests, doctests, rustdoc,
+dependency policy, workflow policy, documentation, package inventory, 100,000 arbitrary-byte fuzz
+executions, mutation testing with no survivor or timeout, and all four performance workloads. Each
+command writes its complete output below repository-backed `target/verification`.
 
 After the gates pass, the workflow generates a CycloneDX 1.5 JSON SBOM with
 [`cargo-cyclonedx` 0.5.9](https://docs.rs/crate/cargo-cyclonedx/0.5.9/source/README.md). It refuses to

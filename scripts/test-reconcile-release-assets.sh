@@ -83,7 +83,7 @@ jq -n --arg version "$version" --arg checksum "$package_sha256" \
 jq -n \
   --arg version "$version" \
   --arg source_commit "$source_commit" \
-  --arg formal_commit '59952b0cccbdd32f18f2c13f87c539c7e5427e5d' \
+  --arg formal_commit '83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697' \
   --arg package_sha256 "$package_sha256" \
   --arg sbom_sha256 "$sbom_sha256" \
   '{schema: "libvgraph-interop-release-evidence-v1", crate_version: $version,

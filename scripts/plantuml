@@ -38,7 +38,7 @@ cat "$renderer_log"
 if [[ "$renderer_status" -ne 0 ]]; then
   exit "$renderer_status"
 fi
-if rg -q '(^|[.: ])(Exception|Error)(:|$)|ClassNotFound|Syntax Error' "$renderer_log"; then
+if grep -E -q '(^|[.: ])(Exception|Error)(:|$)|ClassNotFound|Syntax Error' "$renderer_log"; then
   printf '%s\n' 'PlantUML emitted an exception or syntax error despite a zero exit status' >&2
   exit 1
 fi

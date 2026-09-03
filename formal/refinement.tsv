@@ -73,3 +73,4 @@ INT-071	TLC	formal/tla/ReleaseMachine.tla	PublishedHasCompleteAssets	.github/wor
 INT-072	TLC	formal/tla/ReleaseMachine.tla	PublishedRegistryMatches	.github/workflows/release.yml	Verify crates.io checksum
 INT-073	TLC	formal/tla/ReleaseMachine.tla	AtMostOnePublication	.github/workflows/release.yml	Publish immutable release
 INT-074	TLC	formal/tla/ReleaseMachine.tla	RejectedNeverPublishes	.github/workflows/release.yml	Reject incompatible release state
+INT-075	TLC	formal/tla/ReleaseMachine.tla	PublishedHasPortableToolClosure	scripts/check-portable-tools.sh	portable_tool_closure_is_explicit
