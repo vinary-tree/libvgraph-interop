@@ -21,9 +21,11 @@ mkdir -p \
   "$remote_assets"
 cp "$repository_root/scripts/reconcile-release-assets.sh" "$fixture/scripts/"
 cp "$repository_root/scripts/release-evidence-files.txt" "$fixture/scripts/"
+cp "$repository_root/scripts/resolve-formal-commit.sh" "$fixture/scripts/"
 cp "$repository_root/scripts/validate-release-version.sh" "$fixture/scripts/"
 cp "$repository_root/formal/contract.sha256" "$fixture/formal/"
 cp "$repository_root/formal/refinement.tsv" "$fixture/formal/"
+cp "$repository_root/formal/source.commit" "$fixture/formal/"
 cp "$repository_root/docs/diagrams/rendered.sha256" "$fixture/docs/diagrams/"
 printf '%s\n' fixture > "$fixture/fixture-marker"
 git -C "$fixture" init --quiet
@@ -36,6 +38,7 @@ version=0.1.0
 tag="v$version"
 release_id=42
 source_commit="$(git -C "$fixture" rev-parse HEAD)"
+formal_commit="$("$fixture/scripts/resolve-formal-commit.sh")"
 package_name="libvgraph-interop-$version.crate"
 sbom_name="libvgraph-interop-$version.cdx.json"
 evidence_name="libvgraph-interop-$version-evidence-$source_commit.tar"
@@ -83,7 +86,7 @@ jq -n --arg version "$version" --arg checksum "$package_sha256" \
 jq -n \
   --arg version "$version" \
   --arg source_commit "$source_commit" \
-  --arg formal_commit '83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697' \
+  --arg formal_commit "$formal_commit" \
   --arg package_sha256 "$package_sha256" \
   --arg sbom_sha256 "$sbom_sha256" \
   '{schema: "libvgraph-interop-release-evidence-v1", crate_version: $version,

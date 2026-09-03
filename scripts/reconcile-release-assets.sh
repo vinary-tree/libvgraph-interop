@@ -32,6 +32,7 @@ fi
 release_directory="$repository_root/target/release"
 evidence_directory="$repository_root/target/verification"
 source_commit="$(git -C "$repository_root" rev-parse HEAD)"
+formal_commit="$("$repository_root/scripts/resolve-formal-commit.sh")"
 package_name="libvgraph-interop-$version.crate"
 sbom_name="libvgraph-interop-$version.cdx.json"
 evidence_name="libvgraph-interop-$version-evidence-$source_commit.tar"
@@ -167,7 +168,7 @@ validate_evidence_bundle() {
   jq -e \
     --arg version "$version" \
     --arg source_commit "$source_commit" \
-    --arg formal_commit '83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697' \
+    --arg formal_commit "$formal_commit" \
     --arg package_sha256 "$(sha256sum "$package" | cut -d' ' -f1)" \
     --arg sbom_sha256 "$(sha256sum "$sbom" | cut -d' ' -f1)" \
     '.schema == "libvgraph-interop-release-evidence-v1"

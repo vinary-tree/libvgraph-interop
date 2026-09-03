@@ -23,6 +23,9 @@ required_files=(
   docs/releases/v0.1.0.md
   formal/contract.sha256
   formal/refinement.tsv
+  formal/source.commit
+  scripts/check-formal-source-binding.sh
+  scripts/check-formal-source-workflows.sh
   scripts/check-package.sh
   scripts/check-portable-tools.sh
   scripts/check-refinement.sh
@@ -39,10 +42,12 @@ required_files=(
   scripts/test-release-workflow.sh
   scripts/test-reconcile-release-assets.sh
   scripts/test-registry-release-status.sh
+  scripts/test-formal-source-binding.sh
   scripts/test-portable-tools.sh
   scripts/test-release-sbom.sh
   scripts/test-release-version.sh
   scripts/validate-release-version.sh
+  scripts/resolve-formal-commit.sh
   scripts/verify-formal-provenance.sh
   scripts/verify-portable.sh
   scripts/verify-release-candidate.sh

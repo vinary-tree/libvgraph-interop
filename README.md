@@ -82,7 +82,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Verification
 
 Run `scripts/verify.sh` from a checkout whose sibling formal source is the exact
-`libvgraph` contract commit recorded in `formal/contract.sha256`. Every heavy command is placed
+`libvgraph` commit named by `formal/source.commit`; `formal/contract.sha256` binds its proof
+artifacts. Every heavy command is placed
 inside an explicit no-swap `systemd-run` scope and writes evidence under `target/verification`.
 Documentation verification is read-only: it never invokes vinary-doc-lint auto-repair.
 

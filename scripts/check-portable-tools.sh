@@ -8,6 +8,7 @@ bootstrap_tools=(
   bash
   cut
   diff
+  dirname
   git
   grep
   head
@@ -30,6 +31,7 @@ complete_tools=(
   curl
   cut
   diff
+  dirname
   env
   find
   git
@@ -37,6 +39,7 @@ complete_tools=(
   head
   java
   jq
+  ln
   mkdir
   mktemp
   mv

@@ -30,7 +30,7 @@ The release state machine was model-checked before the workflow was implemented.
 refinement admits one path:
 
 ```text
-protected signer and protected main
+protected signer, protected main, and exact formal-source binding
 → explicit portable tool closure and complete gates
 → compatible draft
 → equal crates.io checksum
@@ -39,7 +39,7 @@ protected signer and protected main
 ```
 
 The complete gates first verify the bootstrap command set, then verify the complete command and
-pinned-plugin closure after provisioning. They include formal provenance, all 75
+pinned-plugin closure after provisioning. They include formal provenance, all 76
 formal-to-production mappings, formatting, compilation, strict Clippy, tests, doctests, rustdoc,
 dependency policy, workflow policy, documentation, package inventory, 100,000 arbitrary-byte fuzz
 executions, mutation testing with no survivor or timeout, and all four performance workloads. Each

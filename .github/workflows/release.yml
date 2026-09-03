@@ -109,11 +109,19 @@ jobs:
             exit 1
           fi
 
+      - name: Resolve immutable formal source binding
+        id: formal_source
+        working-directory: target/candidate
+        run: |
+          set -euo pipefail
+          scripts/check-portable-tools.sh bootstrap
+          printf 'commit=%s\n' "$(scripts/resolve-formal-commit.sh)" >> "$GITHUB_OUTPUT"
+
       - name: Check out immutable formal source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.2.2
         with:
           repository: vinary-tree/libvgraph
-          ref: 59952b0cccbdd32f18f2c13f87c539c7e5427e5d
+          ref: ${{ steps.formal_source.outputs.commit }}
           path: target/formal-source
           persist-credentials: false
 

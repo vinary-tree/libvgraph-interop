@@ -11,6 +11,8 @@ cargo-publish.log
 cargo-test.log
 docs.log
 formal-provenance.log
+formal-source-binding-properties.log
+formal-source-workflows.log
 fuzz-fmt.log
 fuzz.log
 github-immutable-releases.json

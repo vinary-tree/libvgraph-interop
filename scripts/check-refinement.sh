@@ -3,7 +3,7 @@ set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 formal_source="${LIBVGRAPH_FORMAL_SOURCE:-$repository_root/../libvgraph-vco-e2-interop-formal}"
-formal_commit='83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697'
+formal_commit="$("$repository_root/scripts/resolve-formal-commit.sh")"
 ledger="$repository_root/formal/refinement.tsv"
 manifest="$repository_root/formal/contract.sha256"
 evidence_directory="$repository_root/target/verification"
@@ -38,8 +38,8 @@ if ! diff -u "$formal_projection" "$refinement_projection"; then
 fi
 
 row_count="$(wc -l < "$refinement_projection")"
-if [[ "$row_count" -ne 75 ]]; then
-  printf 'expected exactly 75 refinement rows, found %s\n' "$row_count" >&2
+if [[ "$row_count" -ne 76 ]]; then
+  printf 'expected exactly 76 refinement rows, found %s\n' "$row_count" >&2
   exit 1
 fi
 

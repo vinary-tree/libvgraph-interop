@@ -3,7 +3,7 @@ set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 formal_source="${LIBVGRAPH_FORMAL_SOURCE:-$repository_root/../libvgraph-vco-e2-interop-formal}"
-formal_commit='83e1cdd489369dcd7d53fb8fdf6041ef3f5cb697'
+formal_commit="$("$repository_root/scripts/resolve-formal-commit.sh")"
 manifest="$repository_root/formal/contract.sha256"
 allowed_signers="$repository_root/.github/allowed_signers"
 expected_artifacts=(
@@ -25,6 +25,7 @@ expected_artifacts=(
   formal/tla/ReleaseMachinePublishEarly.cfg
   formal/tla/ReleaseMachineRepublish.cfg
   formal/tla/ReleaseMachineSkipEvidence.cfg
+  formal/tla/ReleaseMachineSkipFormalSource.cfg
   formal/tla/ReleaseMachineSkipGates.cfg
   formal/tla/ReleaseMachineSkipPortableTools.cfg
   formal/tla/ReleaseMachineSkipProtectedHead.cfg
@@ -36,16 +37,13 @@ expected_artifacts=(
   tests/interop_contract_properties.rs
 )
 
-if [[ ! -d "$formal_source/.git" && ! -f "$formal_source/.git" ]]; then
-  printf 'formal source is not a Git checkout: %s\n' "$formal_source" >&2
-  exit 1
-fi
 if [[ ! -f "$allowed_signers" || -L "$allowed_signers" ]]; then
   printf 'formal signer policy must be a regular file: %s\n' "$allowed_signers" >&2
   exit 1
 fi
 
-git -C "$formal_source" cat-file -e "$formal_commit^{commit}"
+"$repository_root/scripts/check-formal-source-binding.sh" \
+  "$formal_source" "$formal_commit"
 git -C "$formal_source" \
   -c gpg.ssh.allowedSignersFile="$allowed_signers" \
   verify-commit "$formal_commit"

@@ -43,6 +43,11 @@ expect_rejected semantic-version \
   'scripts/validate-release-version.sh' 'scripts/skip-release-version-validation.sh'
 expect_rejected protected-head \
   'Verify candidate is protected main' 'Verify candidate without protected main'
+expect_rejected formal-source-resolver \
+  'scripts/resolve-formal-commit.sh' 'scripts/skip-formal-commit-resolution.sh'
+expect_rejected formal-source-ref \
+  "ref: \${{ steps.formal_source.outputs.commit }}" \
+  'ref: 0000000000000000000000000000000000000000'
 expect_rejected gates \
   'scripts/verify-release-candidate.sh' 'scripts/skip-release-candidate.sh'
 expect_rejected assets \
@@ -70,4 +75,4 @@ if LIBVGRAPH_RELEASE_WORKFLOW="$order_mutant" "$checker" \
 fi
 
 printf '%s\n' \
-  'verified positive release workflow and eleven independently rejected causal mutants'
+  'verified positive release workflow and thirteen independently rejected causal mutants'

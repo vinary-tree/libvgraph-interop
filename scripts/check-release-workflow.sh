@@ -46,6 +46,8 @@ require_literal 'contents: write'
 require_literal 'id-token: write'
 require_literal 'refs/heads/main'
 require_literal 'scripts/validate-release-version.sh'
+require_literal 'scripts/resolve-formal-commit.sh'
+require_literal "ref: \${{ steps.formal_source.outputs.commit }}"
 require_literal "verify-tag \"\$tag\""
 require_literal 'scripts/verify-release-candidate.sh'
 require_literal 'scripts/registry-release-status.sh'
@@ -82,6 +84,7 @@ fi
 ordered_steps=(
   'Verify tag against protected signer policy'
   'Verify candidate is protected main'
+  'Resolve immutable formal source binding'
   'Run complete release gates'
   'Reject incompatible release state'
   'Create draft release'
