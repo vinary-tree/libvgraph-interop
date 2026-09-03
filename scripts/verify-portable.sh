@@ -59,7 +59,7 @@ run_gate release-version-properties "$repository_root/scripts/test-release-versi
 run_gate portable-tool-properties "$repository_root/scripts/test-portable-tools.sh"
 run_gate formal-source-binding-properties \
   "$repository_root/scripts/test-formal-source-binding.sh"
-run_gate actionlint "$repository_root/target/verification-tools/actionlint"
+run_gate actionlint "$repository_root/target/verification-tools/actionlint" -shellcheck=
 run_gate docs "$repository_root/scripts/verify-docs.sh"
 run_gate package-inventory "$repository_root/scripts/check-package.sh"
 run_gate cargo-package cargo package --locked

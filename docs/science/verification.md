@@ -80,7 +80,8 @@ must produce the same canonical edges without shared mutable codec state.
 The portable gate first requires a clean source commit, then executes formal provenance,
 refinement, tool provisioning, ShellCheck, strict YAML lint, root and fuzz formatting, Cargo check,
 strict Clippy, tests, doctests, rustdoc, dependency policy, release-workflow policy and causal
-mutants, workflow lint, documentation rendering and lint, package inventory, package construction,
+mutants, workflow lint with external ShellCheck discovery disabled, documentation rendering and
+lint, package inventory, package construction,
 and a final clean-source check—in that order.
 The complete local gate then runs commit-bound fuzzing, mutation testing, benchmarking, and pgmcp's
 bug gate. Every validation command writes complete output below repository-backed

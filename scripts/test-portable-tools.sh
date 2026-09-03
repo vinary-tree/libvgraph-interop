@@ -20,6 +20,15 @@ fi
 
 "$checker" bootstrap > "$run_directory/bootstrap.log"
 "$checker" complete > "$run_directory/complete.log"
+portable_verifier_mutant="$run_directory/verify-portable.sh"
+cp "$repository_root/scripts/verify-portable.sh" "$portable_verifier_mutant"
+SEARCH=' -shellcheck=' REPLACEMENT='' perl -0pi -e \
+  's/\Q$ENV{SEARCH}\E/$ENV{REPLACEMENT}/' "$portable_verifier_mutant"
+if actionlint_is_isolated_from_system_shellcheck "$portable_verifier_mutant" \
+    > "$run_directory/actionlint-system-shellcheck.log" 2>&1; then
+  printf '%s\n' 'actionlint system-ShellCheck discovery mutant unexpectedly passed' >&2
+  exit 1
+fi
 if "$checker" unknown > "$run_directory/unknown.log" 2>&1; then
   printf '%s\n' 'portable tool closure admitted an unknown phase' >&2
   exit 1
@@ -36,4 +45,4 @@ if grep -R -E -n \
 fi
 
 printf '%s\n' \
-  'verified declared command closure, missing-command rejection, and no ripgrep dependency'
+  'verified declared command closure, isolated actionlint, missing-command rejection, and no ripgrep dependency'

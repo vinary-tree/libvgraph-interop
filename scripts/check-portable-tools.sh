@@ -93,6 +93,17 @@ verify_complete_plugins() {
   done
 }
 
+actionlint_is_isolated_from_system_shellcheck() {
+  local verifier="${1:-$repository_root/scripts/verify-portable.sh}"
+  local expected="run_gate actionlint \"\$repository_root/target/verification-tools/actionlint\" -shellcheck="
+  if [[ ! -f "$verifier" || -L "$verifier" ]] \
+      || [[ "$(grep -F -x -c -- "$expected" "$verifier" || true)" -ne 1 ]]; then
+    printf 'portable verifier must disable actionlint system-ShellCheck discovery: %s\n' \
+      "$verifier" >&2
+    return 1
+  fi
+}
+
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [[ "$#" -ne 1 ]]; then
     printf 'usage: %s bootstrap|complete\n' "$0" >&2
@@ -105,6 +116,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     complete)
       portable_tool_closure_is_explicit "${complete_tools[@]}"
       verify_complete_plugins
+      actionlint_is_isolated_from_system_shellcheck
       ;;
     *)
       printf 'unknown portable tool-closure phase: %s\n' "$1" >&2
