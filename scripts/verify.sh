@@ -30,6 +30,6 @@ run_gate() {
 }
 
 run_gate release-candidate "$repository_root/scripts/verify-release-candidate.sh"
-run_gate pgmcp-bug-gate pgmcp bug-gate
+run_gate pgmcp-bug-gate pgmcp bug-gate --base origin/main
 
 printf '%s\n' 'all libvgraph-interop verification gates passed'
