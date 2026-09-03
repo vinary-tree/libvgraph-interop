@@ -24,6 +24,7 @@ package-inventory.log
 package-rebuild.log
 provision-tools.log
 refinement.log
+registry-release-properties.log
 registry-status-after.log
 registry-status-before.log
 release-assets-properties.log

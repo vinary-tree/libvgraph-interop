@@ -19,6 +19,7 @@ evidence_directory="$repository_root/target/verification"
 mkdir -p "$evidence_directory"
 response="$evidence_directory/crates-io-$crate-$version.json"
 http_status="$(curl --silent --show-error --location --retry 3 \
+  --user-agent 'libvgraph-interop-release/0.1 (+https://github.com/vinary-tree/libvgraph-interop)' \
   --proto '=https' --tlsv1.2 --output "$response" --write-out '%{http_code}' \
   "https://crates.io/api/v1/crates/$crate/$version")"
 

@@ -29,7 +29,11 @@ verify_clean_source
 run_gate formal-provenance "$repository_root/scripts/verify-formal-provenance.sh"
 run_gate refinement "$repository_root/scripts/check-refinement.sh"
 run_gate provision-tools "$repository_root/scripts/provision-verification-tools.sh"
-shell_sources=("$repository_root/scripts/plantuml" "$repository_root"/scripts/*.sh)
+shell_sources=(
+  "$repository_root/scripts/plantuml"
+  "$repository_root"/scripts/*.sh
+  "$repository_root"/scripts/fixtures/*.sh
+)
 run_gate shellcheck "$repository_root/target/verification-tools/shellcheck" \
   "${shell_sources[@]}"
 run_gate yamllint yamllint --strict --config-file "$repository_root/.yamllint.yml" \
@@ -46,6 +50,7 @@ run_gate cargo-deny cargo deny check --hide-inclusion-graph
 run_gate release-workflow "$repository_root/scripts/check-release-workflow.sh"
 run_gate release-workflow-properties "$repository_root/scripts/test-release-workflow.sh"
 run_gate release-assets-properties "$repository_root/scripts/test-reconcile-release-assets.sh"
+run_gate registry-release-properties "$repository_root/scripts/test-registry-release-status.sh"
 run_gate release-sbom-properties "$repository_root/scripts/test-release-sbom.sh"
 run_gate release-version-properties "$repository_root/scripts/test-release-version.sh"
 run_gate actionlint "$repository_root/target/verification-tools/actionlint"

@@ -28,6 +28,7 @@ required_files=(
   scripts/check-release-workflow.sh
   scripts/build-release-evidence.sh
   scripts/generate-release-sbom.sh
+  scripts/fixtures/registry-curl.sh
   scripts/reconcile-release-assets.sh
   scripts/release-evidence-files.txt
   scripts/registry-release-status.sh
@@ -36,6 +37,7 @@ required_files=(
   scripts/run-mutation.sh
   scripts/test-release-workflow.sh
   scripts/test-reconcile-release-assets.sh
+  scripts/test-registry-release-status.sh
   scripts/test-release-sbom.sh
   scripts/test-release-version.sh
   scripts/validate-release-version.sh

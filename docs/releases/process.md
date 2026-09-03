@@ -53,7 +53,8 @@ publication ([GitHub guidance](https://docs.github.com/en/code-security/how-tos/
 ## Registry publication
 
 The workflow packages the candidate before registry access and records its SHA-256 digest. It
-queries the crates.io version API through `scripts/registry-release-status.sh`:
+queries the crates.io version API through `scripts/registry-release-status.sh` using a descriptive
+release-client identity:
 
 - an absent version may be published exactly once;
 - a present version is accepted only when its registry checksum equals the candidate archive;
